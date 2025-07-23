@@ -7,6 +7,7 @@
     </div>
     <br />
     <p>Current Room ID: {{ roomId }}</p>
+    <p>Current player ID: {{ playerId }}</p>
 
     <br />
     <p>Player Name:</p>
@@ -18,6 +19,7 @@
     <p>Room Id:</p>
     <input type="text" v-model="roomId" />
     <button @click="joinRoomHandler">Join room</button>
+    <button @click="leaveRoomHandler">Leave room</button>
     <div class="controls">
       <p>Message:</p>
       <textarea name="" id="" v-model="message"></textarea>
@@ -36,7 +38,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useWebsocket } from '@/composables/useWebsocket'
-import { joinRoomMessage, createRoomMessage } from '@/utils/serverMessages'
+import { joinRoomMessage, createRoomMessage, leaveRoomMessage } from '@/utils/serverMessages'
 
 const { isConnected, sendMessage, socket } = useWebsocket()
 
@@ -44,6 +46,7 @@ const connectionId = ref('')
 const playerName = ref('Player1')
 const roomName = ref('TestRoom')
 const roomId = ref('')
+const playerId = ref('')
 const messagesArray = ref<string[]>([])
 
 socket.onmessage = (message) => {
@@ -52,9 +55,14 @@ socket.onmessage = (message) => {
   if (connectionid) {
     connectionId.value = connectionid
   }
-  const roomid = JSON.parse(message.data).RoomCreated
-  if (roomid) {
-    roomId.value = roomid.room_id
+  const roomcreated = JSON.parse(message.data).RoomCreated
+  if (roomcreated) {
+    roomId.value = roomcreated.room_id
+    playerId.value = roomcreated.player_id
+  }
+  const playerjoined = JSON.parse(message.data).PlayerJoined
+  if (playerjoined) {
+    playerId.value = playerjoined.player_id
   }
 }
 
@@ -71,7 +79,9 @@ const joinRoomHandler = () => {
   socket.send(joinRoomMessage(connectionId.value, playerName.value, roomId.value))
 }
 
-const getRoomInfo = () => {}
+const leaveRoomHandler = () => {
+  socket.send(leaveRoomMessage(connectionId.value))
+}
 </script>
 
 <style scoped></style>

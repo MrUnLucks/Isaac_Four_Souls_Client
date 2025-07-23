@@ -8,6 +8,7 @@
     <br />
     <p>Current Room ID: {{ roomId }}</p>
     <p>Current player ID: {{ playerId }}</p>
+    <p style="color: red">{{ errorMessage }}</p>
 
     <br />
     <p>Player Name:</p>
@@ -21,6 +22,7 @@
     <button @click="joinRoomHandler">Join room</button>
     <button @click="leaveRoomHandler">Leave room</button>
     <div class="controls">
+      <button @click="ping">Send Ping</button>
       <p>Message:</p>
       <textarea name="" id="" v-model="message"></textarea>
       <br />
@@ -38,7 +40,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useWebsocket } from '@/composables/useWebsocket'
-import { joinRoomMessage, createRoomMessage, leaveRoomMessage } from '@/utils/serverMessages'
+import {
+  joinRoomMessage,
+  createRoomMessage,
+  leaveRoomMessage,
+  pingMessage,
+} from '@/utils/serverMessages'
 
 const { isConnected, sendMessage, socket } = useWebsocket()
 
@@ -47,6 +54,7 @@ const playerName = ref('Player1')
 const roomName = ref('TestRoom')
 const roomId = ref('')
 const playerId = ref('')
+const errorMessage = ref('')
 const messagesArray = ref<string[]>([])
 
 socket.onmessage = (message) => {
@@ -64,11 +72,19 @@ socket.onmessage = (message) => {
   if (playerjoined) {
     playerId.value = playerjoined.player_id
   }
+  const error = JSON.parse(message.data).Error
+  if (error) {
+    errorMessage.value = error.message
+  }
 }
 
 const message = ref('')
 const send = () => {
   sendMessage(message.value)
+}
+
+const ping = () => {
+  socket.send(pingMessage())
 }
 
 const createRoomHandler = () => {

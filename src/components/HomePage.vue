@@ -18,6 +18,7 @@
     <input type="text" v-model="roomName" />
     <button @click="createRoomHandler">Create room</button>
     <button @click="destroyRoomHandler">Destroy room</button>
+    <button style="color: green" @click="ready">Ready</button>
     <p>Room Id:</p>
     <input type="text" v-model="roomId" />
     <button @click="joinRoomHandler">Join room</button>
@@ -47,6 +48,7 @@ import {
   leaveRoomMessage,
   pingMessage,
   destroyRoomMessage,
+  playerReadyMessage,
 } from '@/utils/serverMessages'
 
 const { isConnected, sendMessage, socket } = useWebsocket()
@@ -61,9 +63,9 @@ const messagesArray = ref<string[]>([])
 
 socket.onmessage = (message) => {
   messagesArray.value.push(JSON.stringify(message.data))
-  const connectionid = JSON.parse(message.data).Connection_id
+  const connectionid = JSON.parse(message.data).ConnectionId
   if (connectionid) {
-    connectionId.value = connectionid
+    connectionId.value = connectionid.connection_id
   }
   const roomcreated = JSON.parse(message.data).RoomCreated
   if (roomcreated) {
@@ -87,6 +89,10 @@ const send = () => {
 
 const ping = () => {
   socket.send(pingMessage())
+}
+
+const ready = () => {
+  socket.send(playerReadyMessage(playerId.value))
 }
 
 const createRoomHandler = () => {

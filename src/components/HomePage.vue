@@ -17,6 +17,7 @@
     <p>Room name:</p>
     <input type="text" v-model="roomName" />
     <button @click="createRoomHandler">Create room</button>
+    <button @click="destroyRoomHandler">Destroy room</button>
     <p>Room Id:</p>
     <input type="text" v-model="roomId" />
     <button @click="joinRoomHandler">Join room</button>
@@ -38,13 +39,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref } from 'vue'
 import { useWebsocket } from '@/composables/useWebsocket'
 import {
   joinRoomMessage,
   createRoomMessage,
   leaveRoomMessage,
   pingMessage,
+  destroyRoomMessage,
 } from '@/utils/serverMessages'
 
 const { isConnected, sendMessage, socket } = useWebsocket()
@@ -89,6 +91,10 @@ const ping = () => {
 
 const createRoomHandler = () => {
   socket.send(createRoomMessage(roomName.value, playerName.value))
+}
+
+const destroyRoomHandler = () => {
+  socket.send(destroyRoomMessage(roomId.value))
 }
 
 const joinRoomHandler = () => {

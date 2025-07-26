@@ -1,6 +1,6 @@
 export type ServerMessage =
   | { Ping: null }
-  | { Chat: { message: string } }
+  | { Chat: { message: string; room_id: string } }
   | { CreateRoom: { room_name: string; first_player_name: string } }
   | { DestroyRoom: { room_id: string } }
   | { JoinRoom: { connection_id: string; player_name: string; room_id: string } }
@@ -14,8 +14,8 @@ export function pingMessage(): string {
 }
 
 // Function for Chat message
-export function chatMessage(message: string): string {
-  const msg: ServerMessage = { Chat: { message } }
+export function chatMessage(message: string, room_id: string): string {
+  const msg: ServerMessage = { Chat: { message, room_id } }
   return JSON.stringify(msg)
 }
 

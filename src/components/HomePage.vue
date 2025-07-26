@@ -23,6 +23,14 @@
     <input type="text" v-model="roomId" />
     <button @click="joinRoomHandler">Join room</button>
     <button @click="leaveRoomHandler">Leave room</button>
+    <br />
+    <br />
+    <p>Chat:</p>
+    <textarea name="" id="" v-model="chatMessageObj"></textarea>
+    <br />
+    <button @click="sendChatMessageHandler">Send Message</button>
+    <br />
+    <br />
     <div class="controls">
       <button @click="ping">Send Ping</button>
       <p>Message:</p>
@@ -49,6 +57,7 @@ import {
   pingMessage,
   destroyRoomMessage,
   playerReadyMessage,
+  chatMessage,
 } from '@/utils/serverMessages'
 
 const { isConnected, sendMessage, socket } = useWebsocket()
@@ -59,6 +68,7 @@ const roomName = ref('TestRoom')
 const roomId = ref('')
 const playerId = ref('')
 const errorMessage = ref('')
+const chatMessageObj = ref('')
 const messagesArray = ref<string[]>([])
 
 socket.onmessage = (message) => {
@@ -101,6 +111,11 @@ const createRoomHandler = () => {
 
 const destroyRoomHandler = () => {
   socket.send(destroyRoomMessage(roomId.value))
+}
+
+const sendChatMessageHandler = () => {
+  socket.send(chatMessage(chatMessageObj.value, roomId.value))
+  chatMessageObj.value = ''
 }
 
 const joinRoomHandler = () => {

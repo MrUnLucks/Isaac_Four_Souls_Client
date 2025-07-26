@@ -48,8 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useWebsocket } from '@/composables/useWebsocket'
+import { onMounted, ref } from 'vue'
 import {
   joinRoomMessage,
   createRoomMessage,
@@ -60,8 +59,6 @@ import {
   chatMessage,
 } from '@/utils/serverMessages'
 
-const { isConnected, sendMessage, socket } = useWebsocket()
-
 const connectionId = ref('')
 const playerName = ref('Player1')
 const roomName = ref('TestRoom')
@@ -70,59 +67,95 @@ const playerId = ref('')
 const errorMessage = ref('')
 const chatMessageObj = ref('')
 const messagesArray = ref<string[]>([])
+const isConnected = ref(false)
 
-socket.onmessage = (message) => {
-  messagesArray.value.push(JSON.stringify(message.data))
-  const connectionid = JSON.parse(message.data).ConnectionId
-  if (connectionid) {
-    connectionId.value = connectionid.connection_id
+let socket: WebSocket | null = null
+
+onMounted(() => {
+  // Create a fresh WebSocket connection for this tab
+  socket = new WebSocket('ws://localhost:8080')
+
+  socket.onopen = () => {
+    console.log('WebSocket connected for this tab')
+    isConnected.value = true
   }
-  const roomcreated = JSON.parse(message.data).RoomCreated
-  if (roomcreated) {
-    roomId.value = roomcreated.room_id
-    playerId.value = roomcreated.player_id
+
+  socket.onmessage = (messageEvent) => {
+    console.log('Message received in this tab:', messageEvent.data)
+    messagesArray.value.push(JSON.stringify(messageEvent.data))
+
+    const data = JSON.parse(messageEvent.data)
+
+    // Handle ConnectionId
+    if (data.ConnectionId) {
+      connectionId.value = data.ConnectionId.connection_id
+      console.log('Got connection ID for this tab:', connectionId.value)
+    }
+
+    // Handle RoomCreated
+    if (data.RoomCreated) {
+      roomId.value = data.RoomCreated.room_id
+      playerId.value = data.RoomCreated.player_id
+      console.log('Got player ID for this tab:', playerId.value)
+    }
+
+    // Handle PlayerJoined
+    if (data.PlayerJoined) {
+      playerId.value = data.PlayerJoined.player_id
+      console.log('Player joined, got player ID for this tab:', playerId.value)
+    }
+
+    // Handle Error
+    if (data.Error) {
+      errorMessage.value = JSON.stringify(data.Error.message)
+    }
   }
-  const playerjoined = JSON.parse(message.data).PlayerJoined
-  if (playerjoined) {
-    playerId.value = playerjoined.player_id
+
+  socket.onclose = () => {
+    console.log('WebSocket disconnected for this tab')
+    isConnected.value = false
   }
-  const error = JSON.parse(message.data).Error
-  if (error) {
-    errorMessage.value = error.message
-  }
-}
+})
 
 const message = ref('')
 const send = () => {
-  sendMessage(message.value)
+  if (!socket) return
+  socket.send(message.value)
 }
 
 const ping = () => {
+  if (!socket) return
   socket.send(pingMessage())
 }
 
 const ready = () => {
+  if (!socket) return
   socket.send(playerReadyMessage(playerId.value))
 }
 
 const createRoomHandler = () => {
+  if (!socket) return
   socket.send(createRoomMessage(roomName.value, playerName.value))
 }
 
 const destroyRoomHandler = () => {
+  if (!socket) return
   socket.send(destroyRoomMessage(roomId.value))
 }
 
 const sendChatMessageHandler = () => {
+  if (!socket) return
   socket.send(chatMessage(chatMessageObj.value))
   chatMessageObj.value = ''
 }
 
 const joinRoomHandler = () => {
+  if (!socket) return
   socket.send(joinRoomMessage(connectionId.value, playerName.value, roomId.value))
 }
 
 const leaveRoomHandler = () => {
+  if (!socket) return
   socket.send(leaveRoomMessage(connectionId.value))
 }
 </script>

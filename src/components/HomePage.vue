@@ -114,7 +114,7 @@ const destroyRoomHandler = () => {
 }
 
 const sendChatMessageHandler = () => {
-  socket.send(chatMessage(chatMessageObj.value, roomId.value))
+  socket.send(chatMessage(chatMessageObj.value))
   chatMessageObj.value = ''
 }
 

@@ -11,24 +11,28 @@
     <p style="color: red">{{ errorMessage }}</p>
 
     <br />
-    <p>Player Name:</p>
-    <input type="text" v-model="playerName" />
-    <br />
-    <p>Room name:</p>
-    <input type="text" v-model="roomName" />
-    <button @click="createRoomHandler">Create room</button>
-    <button @click="destroyRoomHandler">Destroy room</button>
-    <button style="color: green" @click="ready">Ready</button>
-    <p>Room Id:</p>
-    <input type="text" v-model="roomId" />
-    <button @click="joinRoomHandler">Join room</button>
-    <button @click="leaveRoomHandler">Leave room</button>
-    <br />
-    <br />
-    <p>Chat:</p>
-    <textarea name="" id="" v-model="chatMessageObj"></textarea>
-    <br />
-    <button @click="sendChatMessageHandler">Send Message</button>
+    <div v-if="!playerId">
+      <p>Player Name:</p>
+      <input type="text" v-model="playerName" />
+      <br />
+      <p>Room name:</p>
+      <input type="text" v-model="roomName" />
+      <button @click="createRoomHandler">Create room</button>
+      <button @click="destroyRoomHandler">Destroy room</button>
+      <p>Room Id:</p>
+      <input type="text" v-model="roomId" />
+      <button @click="joinRoomHandler">Join room</button>
+      <button @click="leaveRoomHandler">Leave room</button>
+      <br />
+      <br />
+    </div>
+    <div v-else>
+      <button style="background-color: green" @click="ready">Ready</button>
+      <p>Chat:</p>
+      <textarea name="" id="" v-model="chatMessageObj"></textarea>
+      <br />
+      <button @click="sendChatMessageHandler">Send Message</button>
+    </div>
     <br />
     <br />
     <div class="controls">
@@ -59,8 +63,14 @@ import {
   chatMessage,
 } from '@/utils/serverMessages'
 
+const generateUniquePlayerName = () => {
+  const timestamp = Date.now()
+  const random = Math.floor(Math.random() * 1000)
+  return `Player_${timestamp}_${random}`
+}
+
 const connectionId = ref('')
-const playerName = ref('Player1')
+const playerName = ref(generateUniquePlayerName())
 const roomName = ref('TestRoom')
 const roomId = ref('')
 const playerId = ref('')
@@ -72,7 +82,6 @@ const isConnected = ref(false)
 let socket: WebSocket | null = null
 
 onMounted(() => {
-  // Create a fresh WebSocket connection for this tab
   socket = new WebSocket('ws://localhost:8080')
 
   socket.onopen = () => {
@@ -86,33 +95,35 @@ onMounted(() => {
 
     const data = JSON.parse(messageEvent.data)
 
-    // Handle ConnectionId
     if (data.ConnectionId) {
       connectionId.value = data.ConnectionId.connection_id
-      console.log('Got connection ID for this tab:', connectionId.value)
     }
 
-    // Handle RoomCreated
     if (data.RoomCreated) {
-      roomId.value = data.RoomCreated.room_id
-      playerId.value = data.RoomCreated.player_id
-      console.log('Got player ID for this tab:', playerId.value)
+      // Handle room listings
     }
 
-    // Handle PlayerJoined
     if (data.PlayerJoined) {
-      playerId.value = data.PlayerJoined.player_id
-      console.log('Player joined, got player ID for this tab:', playerId.value)
+      // Handle player connection o nfrontend
     }
 
-    // Handle Error
+    if (data.SelfJoined) {
+      playerId.value = data.SelfJoined.player_id
+      playerName.value = data.SelfJoined.player_name
+    }
+
+    if (data.FirstPlayerRoomCreated) {
+      roomId.value = data.FirstPlayerRoomCreated.room_id
+      playerId.value = data.FirstPlayerRoomCreated.player_id
+    }
+
     if (data.Error) {
       errorMessage.value = JSON.stringify(data.Error.message)
     }
   }
 
   socket.onclose = () => {
-    console.log('WebSocket disconnected for this tab')
+    console.log('WebSocket disconnecteb')
     isConnected.value = false
   }
 })

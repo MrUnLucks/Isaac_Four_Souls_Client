@@ -32,6 +32,8 @@
       <textarea name="" id="" v-model="chatMessageObj"></textarea>
       <br />
       <button @click="sendChatMessageHandler">Send Message</button>
+      <button @click="passTurn">Pass Turn</button>
+      {{ turnOrder }}
     </div>
     <br />
     <br />
@@ -61,6 +63,7 @@ import {
   destroyRoomMessage,
   playerReadyMessage,
   chatMessage,
+  passTurnMessage,
 } from '@/utils/serverMessages'
 
 const generateUniquePlayerName = () => {
@@ -69,6 +72,7 @@ const generateUniquePlayerName = () => {
   return `Player_${timestamp}_${random}`
 }
 
+//Temporary for testing purposes
 const connectionId = ref('')
 const playerName = ref(generateUniquePlayerName())
 const roomName = ref('TestRoom')
@@ -78,6 +82,8 @@ const errorMessage = ref('')
 const chatMessageObj = ref('')
 const messagesArray = ref<string[]>([])
 const isConnected = ref(false)
+const turnOrder = ref([])
+const isPlayerActive = ref(false)
 
 let socket: WebSocket | null = null
 
@@ -101,6 +107,16 @@ onMounted(() => {
 
     if (data.RoomCreated) {
       // Handle room listings
+    }
+
+    if (data.TurnOrder) {
+      turnOrder.value = data.TurnOrder
+    }
+
+    if (data.TurnChangeResult) {
+      if (data.TurnChangeResult) {
+        isPlayerActive.value = false
+      }
     }
 
     if (data.PlayerJoined) {
@@ -141,7 +157,7 @@ const ping = () => {
 
 const ready = () => {
   if (!socket) return
-  socket.send(playerReadyMessage(playerId.value))
+  socket.send(playerReadyMessage())
 }
 
 const createRoomHandler = () => {
@@ -162,12 +178,17 @@ const sendChatMessageHandler = () => {
 
 const joinRoomHandler = () => {
   if (!socket) return
-  socket.send(joinRoomMessage(connectionId.value, playerName.value, roomId.value))
+  socket.send(joinRoomMessage(playerName.value, roomId.value))
 }
 
 const leaveRoomHandler = () => {
   if (!socket) return
-  socket.send(leaveRoomMessage(connectionId.value))
+  socket.send(leaveRoomMessage())
+}
+
+const passTurn = () => {
+  if (!socket) return
+  socket.send(passTurnMessage())
 }
 </script>
 

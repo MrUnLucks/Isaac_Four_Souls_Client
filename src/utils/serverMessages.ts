@@ -3,9 +3,10 @@ export type ServerMessage =
   | { Chat: { message: string } }
   | { CreateRoom: { room_name: string; first_player_name: string } }
   | { DestroyRoom: { room_id: string } }
-  | { JoinRoom: { connection_id: string; player_name: string; room_id: string } }
-  | { LeaveRoom: { connection_id: string } }
-  | { PlayerReady: { player_id: string } }
+  | { JoinRoom: { player_name: string; room_id: string } }
+  | { LeaveRoom: null }
+  | { PlayerReady: null }
+  | { TurnPass: null }
 
 // Function for Ping message
 export function pingMessage(): string {
@@ -34,23 +35,25 @@ export function destroyRoomMessage(room_id: string): string {
 }
 
 // Function for JoinRoom message
-export function joinRoomMessage(
-  connection_id: string,
-  player_name: string,
-  room_id: string,
-): string {
-  const msg: ServerMessage = { JoinRoom: { connection_id, player_name, room_id } }
+export function joinRoomMessage(player_name: string, room_id: string): string {
+  const msg: ServerMessage = { JoinRoom: { player_name, room_id } }
   return JSON.stringify(msg)
 }
 
 // Function for LeaveRoom message
-export function leaveRoomMessage(connection_id: string): string {
-  const msg: ServerMessage = { LeaveRoom: { connection_id } }
+export function leaveRoomMessage(): string {
+  const msg: ServerMessage = { LeaveRoom: null }
   return JSON.stringify(msg)
 }
 
 // Function for PlayerReady message
-export function playerReadyMessage(player_id: string): string {
-  const msg: ServerMessage = { PlayerReady: { player_id } }
+export function playerReadyMessage(): string {
+  const msg: ServerMessage = { PlayerReady: null }
+  return JSON.stringify(msg)
+}
+
+// Function for Ping message
+export function passTurnMessage(): string {
+  const msg: ServerMessage = { TurnPass: null }
   return JSON.stringify(msg)
 }
